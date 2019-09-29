@@ -42,7 +42,7 @@ export const authLogin = (username, password) => {
         dispatch(authStart());
         axios.post('http://127.0.0.1:8000/rest-auth/login/', {
             username: username,
-            password, password
+            password: password
         })
             .then(res => {
                 const token = res.data.key;
@@ -50,7 +50,7 @@ export const authLogin = (username, password) => {
                 localStorage.setItem('token', token);
                 localStorage.setItem('exirationDate', expirationDate);
                 dispatch(authSuccess(token));
-                dipatch(checkAuthTimeout(3600));
+                dispatch(checkAuthTimeout(3600));
             })
             .cath(err => {
                 dispatch(authFail(err))
@@ -73,10 +73,27 @@ export const authSignup = (username, email, password1, password2) => {
                 localStorage.setItem('token', token);
                 localStorage.setItem('exirationDate', expirationDate);
                 dispatch(authSuccess(token));
-                dipatch(checkAuthTimeout(3600));
+                dispatch(checkAuthTimeout(3600));
             })
             .cath(err => {
                 dispatch(authFail(err))
             })
+    }
+}
+
+export const authCheckState = () => {
+    return dispatch => {
+        const token = localStorage.getItem('token')
+        if (token === undefined) {
+            dispatch(logout());
+        } else {
+            const expirationDate = new Date(localStorage.getItem('expirationDate'));
+            if (expirationDate <= new Date()) {
+                dispatch(logout());
+            } else {
+                dispatch(authSuccess(token))
+                dispatch(checkAuthTimeout((expirationDate.getTime() - new Date().getTime()) / 1000))
+            }
+        }
     }
 }
